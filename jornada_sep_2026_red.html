@@ -1,0 +1,169 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Courier+Prime:wght@400;700&family=Bebas+Neue&display=swap');
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  #app { min-height: 520px; background: #0d0404; border-radius: 12px; overflow: hidden; font-family: 'Courier Prime', monospace; position: relative; }
+  .scanlines { position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px); pointer-events: none; z-index: 10; }
+  .screen { padding: 2rem 2rem 1.5rem; position: relative; z-index: 1; }
+  .header { text-align: center; margin-bottom: 1.5rem; }
+  .title { font-family: 'Bebas Neue', sans-serif; font-size: 44px; color: #e83030; letter-spacing: 6px; line-height: 1; text-shadow: 0 0 28px rgba(232,48,48,0.5); }
+  .subtitle { font-size: 12px; color: #7a3535; letter-spacing: 2px; margin-top: 0.5rem; }
+  .divider { border: none; border-top: 1px solid #2a1010; margin: 1rem 0; }
+  .enigma-box { background: #110606; border: 1px solid #3a1515; border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 1.5rem; }
+  .enigma-label { font-size: 9px; color: #5a2525; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.75rem; }
+  .enigma-text { font-size: 14px; color: #a07070; line-height: 1.9; }
+  .enigma-text span.highlight { color: #e83030; font-weight: 700; }
+  .clues-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 1.5rem; }
+  .clue-card { background: #110606; border: 1px solid #1e0808; border-radius: 6px; padding: 0.85rem 1rem; transition: border-color 0.3s, background 0.3s; }
+  .clue-card.revealed { border-color: #4a1515; background: #160a0a; }
+  .clue-icon { font-size: 18px; margin-bottom: 0.4rem; opacity: 0.4; transition: opacity 0.3s; }
+  .clue-card.revealed .clue-icon { opacity: 1; }
+  .clue-title { font-size: 9px; letter-spacing: 2px; text-transform: uppercase; color: #3a1515; margin-bottom: 0.3rem; transition: color 0.3s; }
+  .clue-card.revealed .clue-title { color: #a03030; }
+  .clue-desc { font-size: 12px; color: #2a1010; line-height: 1.5; transition: color 0.3s; }
+  .clue-card.revealed .clue-desc { color: #8a4040; }
+  .input-zone { display: flex; gap: 10px; align-items: center; }
+  .code-input { flex: 1; background: #110606; border: 1px solid #3a1515; border-radius: 6px; padding: 0.75rem 1rem; font-family: 'Courier Prime', monospace; font-size: 18px; font-weight: 700; color: #e83030; letter-spacing: 6px; text-transform: uppercase; text-align: center; outline: none; transition: border-color 0.2s, box-shadow 0.2s; }
+  .code-input:focus { border-color: #7a1515; box-shadow: 0 0 0 2px rgba(232,48,48,0.12); }
+  .code-input.error { border-color: #6a0a0a; color: #803030; animation: shake 0.3s ease; }
+  .code-input.success { border-color: #4a1515; color: #e83030; }
+  @keyframes shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+  .submit-btn { background: #e83030; border: none; border-radius: 6px; padding: 0.75rem 1.5rem; font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 2px; color: #fff; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+  .submit-btn:hover { background: #ff4444; }
+  .submit-btn:active { transform: scale(0.97); }
+  .feedback { margin-top: 0.75rem; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; min-height: 16px; text-align: center; color: #3a1515; transition: color 0.3s; }
+  .feedback.error { color: #903030; }
+  #victory { display: none; position: absolute; inset: 0; background: #0d0404; z-index: 20; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; text-align: center; }
+  #victory.show { display: flex; }
+  .victory-particles { position: absolute; inset: 0; overflow: hidden; pointer-events: none; }
+  .particle { position: absolute; border-radius: 50%; animation: fall linear forwards; }
+  @keyframes fall { 0% { transform: translateY(-20px) rotate(0deg); opacity: 1; } 100% { transform: translateY(600px) rotate(720deg); opacity: 0; } }
+  .victory-stamp { font-size: 64px; margin-bottom: 1rem; animation: stamp 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) both; }
+  @keyframes stamp { 0% { transform: scale(3); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+  .victory-title { font-family: 'Bebas Neue', sans-serif; font-size: 52px; color: #e83030; letter-spacing: 8px; text-shadow: 0 0 30px rgba(232,48,48,0.6); animation: fadeUp 0.5s 0.2s both; line-height: 1; }
+  .victory-sub { font-size: 11px; color: #5a2525; letter-spacing: 4px; text-transform: uppercase; margin: 0.5rem 0 1.5rem; animation: fadeUp 0.5s 0.35s both; }
+  .victory-answer { background: #160808; border: 1px solid #5a1a1a; border-radius: 8px; padding: 1rem 2rem; animation: fadeUp 0.5s 0.5s both; margin-bottom: 1.5rem; }
+  .victory-answer-label { font-size: 9px; color: #7a2525; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 0.4rem; }
+  .victory-answer-text { font-family: 'Bebas Neue', sans-serif; font-size: 36px; color: #e83030; letter-spacing: 4px; text-shadow: 0 0 20px rgba(232,48,48,0.4); }
+  .victory-desc { font-size: 14px; color: #a06060; line-height: 1.9; max-width: 380px; animation: fadeUp 0.5s 0.65s both; font-style: italic; }
+  @keyframes fadeUp { 0% { transform: translateY(16px); opacity: 0; } 100% { transform: translateY(0); opacity: 1; } }
+  .attempts-display { position: absolute; top: 1rem; right: 1.5rem; font-size: 9px; color: #2a1010; letter-spacing: 2px; text-transform: uppercase; z-index: 2; }
+  .attempts-count { color: #5a2525; font-weight: 700; }
+  .progress-bar-wrap { display: flex; gap: 4px; margin-bottom: 1.25rem; }
+  .prog-segment { flex: 1; height: 2px; background: #1e0808; border-radius: 2px; transition: background 0.4s; }
+  .prog-segment.active { background: #e83030; }
+</style>
+
+<div id="app">
+  <div class="scanlines"></div>
+  <div class="attempts-display">tentativas: <span class="attempts-count" id="attempt-count">0</span></div>
+  <div class="screen">
+    <div class="header">
+      <div class="title">Jornada SEP 2026</div>
+      <div class="subtitle">Decifrem o enigma do próximo ponto de encontro</div>
+    </div>
+    <hr class="divider">
+    <div class="progress-bar-wrap">
+      <div class="prog-segment" id="ps1"></div>
+      <div class="prog-segment" id="ps2"></div>
+      <div class="prog-segment" id="ps3"></div>
+      <div class="prog-segment" id="ps4"></div>
+    </div>
+    <div class="enigma-box">
+      <div class="enigma-label">📜 O Enigma</div>
+      <div class="enigma-text">
+        Onde as <span class="highlight">engrenagens</span> encontram os <span class="highlight">electrões</span>,<br>
+        onde a <span class="highlight">terra se estuda</span> sem sair do chão,<br>
+        onde futuros engenheiros <span class="highlight">simulam a fábrica real</span> —<br>
+        é neste polo do saber que deves chegar <span class="highlight">afinal</span>.
+      </div>
+    </div>
+    <div class="clues-grid">
+      <div class="clue-card" id="c1"><div class="clue-icon">⚙️</div><div class="clue-title">Pista 1</div><div class="clue-desc">Engrenagens + electrões = duas engenharias num só lugar</div></div>
+      <div class="clue-card" id="c2"><div class="clue-icon">🌍</div><div class="clue-title">Pista 2</div><div class="clue-desc">Há um departamento que estuda o que está debaixo dos nossos pés</div></div>
+      <div class="clue-card" id="c3"><div class="clue-icon">🏭</div><div class="clue-title">Pista 3</div><div class="clue-desc">Um laboratório simula um ambiente industrial real — o UC Factory Lab</div></div>
+      <div class="clue-card" id="c4"><div class="clue-icon">🎓</div><div class="clue-title">Pista 4</div><div class="clue-desc">Tudo isto acontece num dos polos da Universidade de Coimbra</div></div>
+    </div>
+    <div class="input-zone">
+      <input class="code-input" id="code-input" type="text" maxlength="8" placeholder="_ _ _ _ _ _ _ _" autocomplete="off" spellcheck="false" />
+      <button class="submit-btn" onclick="checkCode()">→</button>
+    </div>
+    <div class="feedback" id="feedback">introduz o código para desbloquear a solução</div>
+  </div>
+
+  <div id="victory">
+    <div class="victory-particles" id="particles"></div>
+    <div class="victory-stamp">🎉</div>
+    <div class="victory-title">Correcto!</div>
+    <div class="victory-sub">Caloiros do SEP — missão cumprida</div>
+    <div class="victory-answer">
+      <div class="victory-answer-label">📍 Próximo destino</div>
+      <div class="victory-answer-text">POLO II DA UC</div>
+    </div>
+    <div class="victory-desc">
+      Avancem para o Polo II cantando<br>músicas do Sempre em Pé. 🎶
+    </div>
+  </div>
+</div>
+
+<script>
+  let attempts = 0;
+  const correctCode = "POLO II";
+  const wrongMessages = [
+    "código incorrecto — tenta novamente",
+    "não é bem isso... relê o enigma",
+    "quase, mas não... as pistas estão todas aí",
+    "pensa nos departamentos mencionados",
+    "dica: é um polo da universidade",
+  ];
+  const input = document.getElementById('code-input');
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') checkCode(); });
+  input.addEventListener('input', () => {
+    input.classList.remove('error');
+    document.getElementById('feedback').className = 'feedback';
+    document.getElementById('feedback').textContent = 'introduz o código para desbloquear a solução';
+    revealClues();
+  });
+  function revealClues() {
+    const len = input.value.trim().length;
+    const thresholds = [1, 3, 5, 6];
+    let toReveal = 0;
+    for (let i = 0; i < thresholds.length; i++) { if (len >= thresholds[i]) toReveal = i + 1; }
+    for (let i = 1; i <= 4; i++) {
+      document.getElementById('c' + i).classList.toggle('revealed', i <= toReveal);
+      document.getElementById('ps' + i).classList.toggle('active', i <= toReveal);
+    }
+  }
+  function checkCode() {
+    const val = input.value.trim().toUpperCase();
+    attempts++;
+    document.getElementById('attempt-count').textContent = attempts;
+    if (val === correctCode) {
+      input.classList.add('success');
+      setTimeout(showVictory, 400);
+    } else {
+      input.classList.add('error');
+      const fb = document.getElementById('feedback');
+      fb.className = 'feedback error';
+      fb.textContent = wrongMessages[Math.min(attempts - 1, wrongMessages.length - 1)];
+      setTimeout(() => input.classList.remove('error'), 500);
+    }
+  }
+  function showVictory() {
+    document.getElementById('victory').classList.add('show');
+    const container = document.getElementById('particles');
+    const colors = ['#e83030','#ff6060','#ff9090','#c02020','#ffffff','#ffaaaa'];
+    for (let i = 0; i < 70; i++) {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = '-10px';
+      p.style.background = colors[Math.floor(Math.random() * colors.length)];
+      const sz = (4 + Math.random() * 7) + 'px';
+      p.style.width = sz; p.style.height = sz;
+      p.style.animationDuration = (1.5 + Math.random() * 2.5) + 's';
+      p.style.animationDelay = (Math.random() * 1.2) + 's';
+      container.appendChild(p);
+    }
+  }
+</script>
